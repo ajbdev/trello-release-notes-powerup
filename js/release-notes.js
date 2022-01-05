@@ -118,10 +118,28 @@ function generateReleaseNotes(cards) {
   }
 }
 
+function persistFilters() {
+  if(t.memberCanWriteToModel('board')) {
+    return;
+  }
+
+  t.set('board', 'shared', 'release-notes', value)
+}
+
 t.render(() => {
   headerLabel.innerHTML = ` for ${list.name}`;
 
   generateReleaseNotes(list.cards);
+
+  renderOptionsForm.addEventListener('formdata', (e) => {
+    console.log('formdata fired');
+
+    let data = e.formData;
+    console.log(data.values());
+    for (var value of data.values()) {
+      console.log(value);
+    }
+  });
 
   for (const label of labels) {
     const checkbox = document.createElement("input");
