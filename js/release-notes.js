@@ -88,6 +88,8 @@ function getGroupLabels() {
 }
 
 function generateReleaseNotes(cards) {
+  persistFilters();
+
   const renderAs = document.querySelector(
     'input[name="render_as"]:checked'
   ).value;
@@ -123,26 +125,55 @@ function persistFilters() {
     return;
   }
 
-  t.set('board', 'shared', 'release-notes', value)
+  const filters = new FormData(renderOptionsForm);
+
+  filters.addEventListener('formdata', (e) => {
+    console.log('form data fired');
+    console.log(e);
+  })
+
+  //t.set('board', 'shared', 'release-notes', value)
 }
 
 t.render(() => {
   headerLabel.innerHTML = ` for ${list.name}`;
 
   generateReleaseNotes(list.cards);
+  
+  // Copy to clipboard functionality
+  // ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
+  // anyways since execCommand will eventually be deprecated
+  copyToClipboardButton.addEventListener('click', (e) => {
+    const type = "text/html";
+    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
 
-  console.log('dev branch test');
-
-  renderOptionsForm.addEventListener('formdata', (e) => {
-    console.log('formdata fired');
-
-    let data = e.formData;
-    console.log(data.values());
-    for (var value of data.values()) {
-      console.log(value);
+    /* global ClipboardItem */
+    const data = [new ClipboardItem({ [type]: blob })];
+    
+    const setCopySuccess = () => {
+      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
     }
+
+    navigator.clipboard.write(data).then(
+        setCopySuccess,
+        (e) => {
+          // Fallback to execCommand method on failure
+          
+          const copyListener = (e) => {
+            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
+            setCopySuccess();
+            e.preventDefault();
+          }
+
+          document.addEventListener("copy", copyListener);
+          document.execCommand("copy");
+          document.removeEventListener("copy", copyListener);
+        }
+    );
   });
 
+  
+  // Group label options
   for (const label of labels) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -152,22 +183,40 @@ t.render(() => {
 
     const option = document.createElement("label");
     option.classList.add("group-labels-option");
+    option.name = "group_label_options[]"
     option.append(checkbox);
     option.append(label.name);
 
     selectGroupLabelsDropdown.append(option);
   }
 
+
+  // Group label options dropdown toggles
+  selectGroupLabelsButton.addEventListener("click", (e) => {
+    selectGroupLabelsDropdown.style.display =
+      selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
+  });
+  
+  document.body.addEventListener('click', (e) => {
+    if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
+      selectGroupLabelsDropdown.style.display = 'none';
+    }
+  });
+
+
+  // Form filters
+  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
+    for (const ckbx of groupLabelOptionCheckboxes) {
+      ckbx.checked = e.target.checked;
+    } 
+    generateReleaseNotes(list.cards);
+  });
+
   for (const radio of renderOptionRadios) {
     radio.addEventListener("change", (e) => {
       generateReleaseNotes(list.cards);
     });
   }
-
-  selectGroupLabelsButton.addEventListener("click", (e) => {
-    selectGroupLabelsDropdown.style.display =
-      selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
-  });
 
   includeDescriptionsCheckbox.addEventListener("change", (e) =>
     generateReleaseNotes(list.cards)
@@ -188,51 +237,4 @@ t.render(() => {
       generateReleaseNotes(list.cards);
     })
   }
-  
-  
-  
-  copyToClipboardButton.addEventListener('click', (e) => {
-    const type = "text/html";
-    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
-    /* global ClipboardItem */
-    const data = [new ClipboardItem({ [type]: blob })];
-    
-    const setCopySuccess = () => {
-      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
-    }
-
-    navigator.clipboard.write(data).then(
-        setCopySuccess,
-        (e) => {
-          // Fallback to execCommand method (which will eventually be deprecated)
-          
-          const copyListener = (e) => {
-            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
-            setCopySuccess();
-            e.preventDefault();
-          }
-
-          document.addEventListener("copy", copyListener);
-          document.execCommand("copy");
-          document.removeEventListener("copy", copyListener);
-        }
-    );
-  })
-  
-  document.addEventListener('copy', (e) => {
-    e.clipboardData
-  })
-  
-  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
-    for (const ckbx of groupLabelOptionCheckboxes) {
-      ckbx.checked = e.target.checked;
-    } 
-    generateReleaseNotes(list.cards);
-  });
-  
-  document.body.addEventListener('click', (e) => {
-    if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
-      selectGroupLabelsDropdown.style.display = 'none';
-    }
-  });
 });
