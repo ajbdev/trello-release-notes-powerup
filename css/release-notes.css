@@ -5,6 +5,7 @@
 #render-options {
   display: flex;
   flex-direction: row;
+  align-items: flex-start;
 }
 
 .render-option-label {
@@ -74,6 +75,7 @@
 }
 #copy-to-clipboard {
   margin-right: .6rem;
+  margin-top: .8rem;
 }
 .group-labels-option {
   margin: 0;
