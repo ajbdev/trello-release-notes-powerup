@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css" />
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <link rel="stylesheet" href="./css/release-notes.css" />
+  </head>
+  <body>
+    <div id="content">
+      <h2>Release Notes<span id="h2-label"></span></h2>
+      <hr />
+      <div class="pad">
+        <form id="render-options">
+          
+          <button id="copy-to-clipboard" type="button">
+            Copy to Clipboard
+          </button>
+          
+          <label class="render-option-label">
+            <input
+              type="radio"
+              name="render_as"
+              value="default"
+              checked="checked"
+            />
+            Default list order
+          </label>
+          <label class="render-option-label">
+            <input type="radio" name="render_as" value="order-label" />
+            Order by label
+          </label>
+          <label class="render-option-label">
+            <input type="radio" name="render_as" value="group-labels" />
+            Group by labels (<a href="#" id="select-group-labels-button">all</a>)
+            <div id="select-group-labels-dropdown" style="display:none">
+              <label class="group-labels-option">
+                <input type="checkbox" value="all" checked="checked" id="group-labels-option-checkbox-all" />
+                All
+              </label>
+            </div>
+          </label>
+          <label>
+            <input type="checkbox" id="include-descriptions" value="yes" />
+            Include descriptions
+          </label>
+        </form>
+      </div>
+
+      <div id="release-notes"></div>
+    </div>
+    <script src="./js/release-notes.js"></script>
+  </body>
+</html>
