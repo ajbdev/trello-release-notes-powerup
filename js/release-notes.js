@@ -131,6 +131,8 @@ t.render(() => {
 
   generateReleaseNotes(list.cards);
 
+  console.log('dev branch test');
+
   renderOptionsForm.addEventListener('formdata', (e) => {
     console.log('formdata fired');
 
