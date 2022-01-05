@@ -127,6 +127,10 @@ function persistFilters() {
 
   const filters = new FormData(renderOptionsForm);
 
+  console.log('persisting filters');
+  console.log(filters.values());
+  console.log(filters.getAll());
+
   filters.addEventListener('formdata', (e) => {
     console.log('form data fired');
     console.log(e);
