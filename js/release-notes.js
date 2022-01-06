@@ -131,7 +131,7 @@ function persistFilters() {
     console.log(field[0], field[1]);
   }
 
-  filter.entries().map((key, val) => {
+  filters.entries().map((key, val) => {
     console.log('map key', key, 'map val', val);
   })
 
