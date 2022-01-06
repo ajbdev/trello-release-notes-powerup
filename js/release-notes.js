@@ -10,6 +10,12 @@ const labels = list.cards
     (label, ix, array) => array.findIndex((a) => a.id === label.id) === ix
   );
 
+Array.prototype.addEventListener = function(evt, listener) {
+  for (const item of this) {
+    item.addEventListener(evt, listener);
+  }
+}
+
 const headerLabel = document.getElementById("h2-label");
 const renderOptionsForm = document.getElementById("render-options");
 const releaseNotesContainer = document.getElementById("release-notes");
@@ -219,8 +225,6 @@ function setupGroupLabelOptionsForm() {
         groupLabelOptionCheckboxAll.checked = false;
         selectGroupLabelsButton.innerText = checked.join(', ')
       }
-      
-      generateReleaseNotes(list.cards);
     })
   }
 
@@ -228,7 +232,6 @@ function setupGroupLabelOptionsForm() {
     for (const ckbx of groupLabelOptionCheckboxes) {
       ckbx.checked = e.target.checked;
     } 
-    generateReleaseNotes(list.cards);
   });
 }
 
@@ -238,12 +241,6 @@ function setupRenderAsForm() {
   if (!renderAs) {
     document.querySelector('input[name="render_as"][value="default"]').checked = true;
   }
-
-  for (const radio of renderOptionRadios) {
-    radio.addEventListener("change", (e) => {
-      generateReleaseNotes(list.cards);
-    });
-  }
 }
 
 function setupForm() {
@@ -251,7 +248,9 @@ function setupForm() {
   setupGroupLabelOptionsForm();
   setupCopyToClipboardButton();
 
-  includeDescriptionsCheckbox.addEventListener("change", (e) =>
+  const inputs = [groupLabelOptionCheckboxes, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox, renderOptionRadios].flat();
+
+  inputs.addEventListener("change", (e) =>
     generateReleaseNotes(list.cards)
   );
 }
