@@ -87,8 +87,10 @@ function getGroupLabels() {
   return labels;
 }
 
-function generateReleaseNotes(cards) {
-  persistFilters();
+function generateReleaseNotes(cards, persist = true) {
+  if (persist) {
+    persistFilters();
+  }
 
   const renderAs = document.querySelector(
     'input[name="render_as"]:checked'
@@ -138,7 +140,12 @@ function persistFilters() {
 t.render(() => {
   headerLabel.innerHTML = ` for ${list.name}`;
 
-  generateReleaseNotes(list.cards);
+  t.get('board', 'shared', 'release-notes').then((v) => {
+    console.log(v);
+    generateReleaseNotes(list.cards, false);
+  });
+
+  
   
   // Copy to clipboard functionality
   // ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
