@@ -215,20 +215,6 @@ function setupGroupLabelOptionsForm() {
     }
   });
 
-  [...groupLabelOptionCheckboxes].addEventListener('change', (e) => {
-    ckbx.addEventListener("change", (e) => {
-      const checked = getGroupLabels();
-      
-      if (checked.length === groupLabelOptionCheckboxes.length) {
-        groupLabelOptionCheckboxAll.checked = true;
-        selectGroupLabelsButton.innerText = "all";
-      } else {
-        groupLabelOptionCheckboxAll.checked = false;
-        selectGroupLabelsButton.innerText = checked.join(', ')
-      }
-    })
-  });
-
   groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
     for (const ckbx of groupLabelOptionCheckboxes) {
       ckbx.checked = e.target.checked;
@@ -244,28 +230,49 @@ function setupRenderAsForm() {
   }
 }
 
+function updateFormUI() {
+  const checkedGroupLabels = getGroupLabels();
+
+  if (checkedGroupLabels.length === groupLabelOptionCheckboxes.length) {
+    groupLabelOptionCheckboxAll.checked = true;
+    selectGroupLabelsButton.innerText = "all";
+  } else {
+    groupLabelOptionCheckboxAll.checked = false;
+    selectGroupLabelsButton.innerText = checked.join(', ')
+  }
+}
+
+function getFormInputs() {
+  return [...groupLabelOptionCheckboxes, ...renderOptionRadios, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox];
+}
+
 function setupForm() {
   setupRenderAsForm();
   setupGroupLabelOptionsForm();
   setupCopyToClipboardButton();
 
-  const inputs = [...groupLabelOptionCheckboxes, ...renderOptionRadios, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox].flat();
+  const inputs = getFormInputs();
 
-  console.log("inputs: ", inputs);
-
-  inputs.addEventListener("change", (e) =>
-    generateReleaseNotes(list.cards)
-  );
+  inputs.addEventListener("change", (e) => {
+    generateReleaseNotes(list.cards);
+    updateFormUI();
+  });
 }
 
 function loadFilter() {
   t.get('board', 'shared', 'release-notes').then((filters) => {
     if (filters && Object.keys(filters).length > 0) {
+      const inputs = getFormInputs();
+
+      inputs.forEach((i) => i.checked = false);
+
       Object.keys(filters).map(o => {
         const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
     
         field.checked = true;
-      })
+      });
+
+      updateFormUI();
     }
   });
 }
