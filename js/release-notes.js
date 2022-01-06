@@ -145,6 +145,7 @@ t.render(() => {
     generateReleaseNotes(list.cards, false);
   });
 
+  console.log('render');
   
   
   // Copy to clipboard functionality
