@@ -127,18 +127,9 @@ function persistFilters() {
 
   const filters = new FormData(renderOptionsForm);
 
-  console.log('persisting filters');
-  
-  console.log(filters.values());
-
   for (const field of filters.entries()) {
     console.log(field[0], field[1]);
   }
-
-  filters.addEventListener('formdata', (e) => {
-    console.log('form data fired');
-    console.log(e);
-  })
 
   //t.set('board', 'shared', 'release-notes', value)
 }
