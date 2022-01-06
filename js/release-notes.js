@@ -27,6 +27,9 @@ const includeDescriptionsCheckbox = document.getElementById(
   "include-descriptions"
 );
 
+
+console.log(list);
+
 function listItemEl(card, showLabel) {
   const li = document.createElement("li");
 
