@@ -2,6 +2,7 @@
 
 var t = TrelloPowerUp.iframe();
 var list = t.arg("releaseNotesList");
+var Promise = window.TrelloPowerUp.Promise;
 
 const labels = list.cards
   .map((card) => card.labels)
@@ -252,31 +253,36 @@ function setupForm() {
   const inputs = getFormInputs();
 
   inputs.addEventListener("change", (e) => {
-    generateReleaseNotes(list.cards);
     updateFormUI();
+    generateReleaseNotes(list.cards);
   });
 }
 
 function loadFilter() {
-  t.get('board', 'shared', 'release-notes').then((filters) => {
-    if (filters && Object.keys(filters).length > 0) {
-      const inputs = getFormInputs();
+  return new Promise((resolve, reject) => {
+    t.get('board', 'shared', 'release-notes').then((filters) => {
+      if (filters && Object.keys(filters).length > 0) {
+        const inputs = getFormInputs();
+  
+        inputs.forEach((i) => i.checked = false);
+  
+        Object.keys(filters).map(o => {
+          const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
+      
+          field.checked = true;
+        });
 
-      inputs.forEach((i) => i.checked = false);
-
-      Object.keys(filters).map(o => {
-        const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
-    
-        field.checked = true;
-      });
-
-      updateFormUI();
-    }
-  });
+        resolve();
+      }
+    });
+  })
+  
 }
 
 (() => {
   setupForm();
-  loadFilter();
-  generateReleaseNotes(list.cards, false);
+  loadFilter().then(() => {
+    updateFormUI();
+    generateReleaseNotes(list.cards, false);
+  });
 })();
