@@ -2,6 +2,7 @@
 
 var t = TrelloPowerUp.iframe();
 var list = t.arg("releaseNotesList");
+var Promise = window.TrelloPowerUp.Promise;
 
 const labels = list.cards
   .map((card) => card.labels)
@@ -9,6 +10,12 @@ const labels = list.cards
   .filter(
     (label, ix, array) => array.findIndex((a) => a.id === label.id) === ix
   );
+
+Array.prototype.addEventListener = function(evt, listener) {
+  for (const item of this) {
+    item.addEventListener(evt, listener);
+  }
+}
 
 const headerLabel = document.getElementById("h2-label");
 const renderOptionsForm = document.getElementById("render-options");
@@ -87,10 +94,20 @@ function getGroupLabels() {
   return labels;
 }
 
-function generateReleaseNotes(cards) {
+function getRenderAs() {
   const renderAs = document.querySelector(
     'input[name="render_as"]:checked'
-  ).value;
+  );
+
+  return renderAs ? renderAs.value : null;
+}
+
+function generateReleaseNotes(cards, persist = true) {
+  if (persist) {
+    persistFilters();
+  }
+
+  const renderAs = getRenderAs();
 
   const c = cards.map((card) => card);
 
@@ -118,30 +135,72 @@ function generateReleaseNotes(cards) {
   }
 }
 
-t.render(() => {
-  headerLabel.innerHTML = ` for ${list.name}`;
+function persistFilters() {
+  if (!t.memberCanWriteToModel('board')) {
+    return;
+  }
 
-  generateReleaseNotes(list.cards);
+  const form = new FormData(renderOptionsForm);
 
+  const filters = {}
+  for (const field of form.entries()) {
+    filters[field[0]] = field[1];
+  }
+
+  t.set('board', 'shared', 'release-notes', filters)
+}
+
+
+// Copy to clipboard functionality
+// ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
+// anyways since execCommand will eventually be deprecated
+function setupCopyToClipboardButton() {
+  copyToClipboardButton.addEventListener('click', (e) => {
+    const type = "text/html";
+    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
+  
+    /* global ClipboardItem */
+    const data = [new ClipboardItem({ [type]: blob })];
+    
+    const setCopySuccess = () => {
+      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
+    }
+  
+    navigator.clipboard.write(data).then(
+        setCopySuccess,
+        (e) => {
+          // Fallback to execCommand method on failure
+          
+          const copyListener = (e) => {
+            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
+            setCopySuccess();
+            e.preventDefault();
+          }
+  
+          document.addEventListener("copy", copyListener);
+          document.execCommand("copy");
+          document.removeEventListener("copy", copyListener);
+        }
+    );
+  });
+}
+
+function setupGroupLabelOptionsForm() {
+  // Group label options
   for (const label of labels) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.value = label.name;
     checkbox.checked = true;
+    checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
     checkbox.classList.add('group-labels-option-checkbox')
 
     const option = document.createElement("label");
-    option.classList.add("group-labels-option");
+    option.classList.add("group-labels-option"); 
     option.append(checkbox);
     option.append(label.name);
 
     selectGroupLabelsDropdown.append(option);
-  }
-
-  for (const radio of renderOptionRadios) {
-    radio.addEventListener("change", (e) => {
-      generateReleaseNotes(list.cards);
-    });
   }
 
   selectGroupLabelsButton.addEventListener("click", (e) => {
@@ -149,70 +208,81 @@ t.render(() => {
       selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
   });
 
-  includeDescriptionsCheckbox.addEventListener("change", (e) =>
-    generateReleaseNotes(list.cards)
-  );
-  
-  for (const ckbx of groupLabelOptionCheckboxes) {
-    ckbx.addEventListener("change", (e) => {
-      const checked = getGroupLabels();
-      
-      if (checked.length === groupLabelOptionCheckboxes.length) {
-        groupLabelOptionCheckboxAll.checked = true;
-        selectGroupLabelsButton.innerText = "all";
-      } else {
-        groupLabelOptionCheckboxAll.checked = false;
-        selectGroupLabelsButton.innerText = checked.join(', ')
-      }
-      
-      generateReleaseNotes(list.cards);
-    })
-  }
-  
-  
-  
-  copyToClipboardButton.addEventListener('click', (e) => {
-    const type = "text/html";
-    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
-    /* global ClipboardItem */
-    const data = [new ClipboardItem({ [type]: blob })];
-    
-    const setCopySuccess = () => {
-      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
-    }
-
-    navigator.clipboard.write(data).then(
-        setCopySuccess,
-        (e) => {
-          // Fallback to execCommand method (which will eventually be deprecated)
-          
-          const copyListener = (e) => {
-            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
-            setCopySuccess();
-            e.preventDefault();
-          }
-
-          document.addEventListener("copy", copyListener);
-          document.execCommand("copy");
-          document.removeEventListener("copy", copyListener);
-        }
-    );
-  })
-  
-  document.addEventListener('copy', (e) => {
-    e.clipboardData
-  })
-  
-  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
-    for (const ckbx of groupLabelOptionCheckboxes) {
-      ckbx.checked = e.target.checked;
-    } 
-    generateReleaseNotes(list.cards);
-  });
-  
   document.body.addEventListener('click', (e) => {
     if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
       selectGroupLabelsDropdown.style.display = 'none';
     }
   });
-});
+
+  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
+    for (const ckbx of groupLabelOptionCheckboxes) {
+      ckbx.checked = e.target.checked;
+    } 
+  });
+}
+
+function setupRenderAsForm() {
+  const renderAs = getRenderAs();
+
+  if (!renderAs) {
+    document.querySelector('input[name="render_as"][value="default"]').checked = true;
+  }
+}
+
+function updateFormUI() {
+  const checkedGroupLabels = getGroupLabels();
+
+  if (checkedGroupLabels.length === groupLabelOptionCheckboxes.length) {
+    groupLabelOptionCheckboxAll.checked = true;
+    selectGroupLabelsButton.innerText = "all";
+  } else {
+    groupLabelOptionCheckboxAll.checked = false;
+    selectGroupLabelsButton.innerText = checkedGroupLabels.join(', ')
+  }
+}
+
+function getFormInputs() {
+  return [...groupLabelOptionCheckboxes, ...renderOptionRadios, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox];
+}
+
+function setupForm() {
+  setupRenderAsForm();
+  setupGroupLabelOptionsForm();
+  setupCopyToClipboardButton();
+
+  const inputs = getFormInputs();
+
+  inputs.addEventListener("change", (e) => {
+    updateFormUI();
+    generateReleaseNotes(list.cards);
+  });
+}
+
+function loadFilter() {
+  return new Promise((resolve, reject) => {
+    t.get('board', 'shared', 'release-notes').then((filters) => {
+      if (filters && Object.keys(filters).length > 0) {
+        const inputs = getFormInputs();
+  
+        inputs.forEach((i) => i.checked = false);
+  
+        Object.keys(filters).map(o => {
+          const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
+      
+          field.checked = true;
+        });
+
+        resolve();
+      }
+    });
+  })
+  
+}
+
+(() => {
+  setupForm();
+  loadFilter().then(() => {
+    updateFormUI();
+    generateReleaseNotes(list.cards, false);
+  });
+})();
