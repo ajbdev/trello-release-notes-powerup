@@ -131,10 +131,6 @@ function persistFilters() {
     console.log(field[0], field[1]);
   }
 
-  filters.entries().map((key, val) => {
-    console.log('map key', key, 'map val', val);
-  })
-
   //t.set('board', 'shared', 'release-notes', value)
 }
 
@@ -182,8 +178,8 @@ t.render(() => {
     checkbox.type = "checkbox";
     checkbox.value = label.name;
     checkbox.checked = true;
-    checkbox.name = "group_label_options[]"
-    //checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
+    //checkbox.name = "group_label_options[]"
+    checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
     checkbox.classList.add('group-labels-option-checkbox')
 
     const option = document.createElement("label");
