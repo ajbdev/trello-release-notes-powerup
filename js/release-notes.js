@@ -235,15 +235,16 @@ for (const ckbx of groupLabelOptionCheckboxes) {
   })
 }
 
-t.render(() => {
-  headerLabel.innerHTML = ` for ${list.name}`;
 
-  t.get('board', 'shared', 'release-notes').then((v) => {
-    console.log(v);
-    generateReleaseNotes(list.cards, false);
-  });
-
-  console.log('render');
-  
-  
+t.get('board', 'shared', 'release-notes').then((v) => {
+  console.log(v);
+  generateReleaseNotes(list.cards, false);
 });
+
+// t.render(() => {
+//   headerLabel.innerHTML = ` for ${list.name}`;
+
+//   console.log('render');
+  
+  
+// });
