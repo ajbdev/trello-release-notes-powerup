@@ -121,7 +121,7 @@ function generateReleaseNotes(cards) {
 }
 
 function persistFilters() {
-  if(t.memberCanWriteToModel('board')) {
+  if (!t.memberCanWriteToModel('board')) {
     return;
   }
 
