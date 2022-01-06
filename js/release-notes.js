@@ -249,7 +249,7 @@ function setupRenderAsForm() {
 function setupForm() {
   setupRenderAsForm();
   setupGroupLabelOptionsForm();
-  setupCopyToClipboardButton()();
+  setupCopyToClipboardButton();
 
   includeDescriptionsCheckbox.addEventListener("change", (e) =>
     generateReleaseNotes(list.cards)
