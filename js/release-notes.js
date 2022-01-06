@@ -27,9 +27,6 @@ const includeDescriptionsCheckbox = document.getElementById(
   "include-descriptions"
 );
 
-
-console.log(list);
-
 function listItemEl(card, showLabel) {
   const li = document.createElement("li");
 
@@ -90,14 +87,20 @@ function getGroupLabels() {
   return labels;
 }
 
+function getRenderAs() {
+  const renderAs = document.querySelector(
+    'input[name="render_as"]:checked'
+  );
+
+  return renderAs ? renderAs.value : null;
+}
+
 function generateReleaseNotes(cards, persist = true) {
   if (persist) {
     persistFilters();
   }
 
-  const renderAs = document.querySelector(
-    'input[name="render_as"]:checked'
-  ).value;
+  const renderAs = getRenderAs();
 
   const c = cards.map((card) => card);
 
@@ -144,118 +147,129 @@ function persistFilters() {
 // Copy to clipboard functionality
 // ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
 // anyways since execCommand will eventually be deprecated
-copyToClipboardButton.addEventListener('click', (e) => {
-  const type = "text/html";
-  const blob = new Blob([releaseNotesContainer.innerHTML], { type });
-
-  /* global ClipboardItem */
-  const data = [new ClipboardItem({ [type]: blob })];
+function setupCopyToClipboardButton() {
+  copyToClipboardButton.addEventListener('click', (e) => {
+    const type = "text/html";
+    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
   
-  const setCopySuccess = () => {
-    copyToClipboardButton.innerText = '✓ Copied to Clipboard';
-  }
-
-  navigator.clipboard.write(data).then(
-      setCopySuccess,
-      (e) => {
-        // Fallback to execCommand method on failure
-        
-        const copyListener = (e) => {
-          e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
-          setCopySuccess();
-          e.preventDefault();
+    /* global ClipboardItem */
+    const data = [new ClipboardItem({ [type]: blob })];
+    
+    const setCopySuccess = () => {
+      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
+    }
+  
+    navigator.clipboard.write(data).then(
+        setCopySuccess,
+        (e) => {
+          // Fallback to execCommand method on failure
+          
+          const copyListener = (e) => {
+            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
+            setCopySuccess();
+            e.preventDefault();
+          }
+  
+          document.addEventListener("copy", copyListener);
+          document.execCommand("copy");
+          document.removeEventListener("copy", copyListener);
         }
-
-        document.addEventListener("copy", copyListener);
-        document.execCommand("copy");
-        document.removeEventListener("copy", copyListener);
-      }
-  );
-});
-
-
-// Group label options
-for (const label of labels) {
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.value = label.name;
-  checkbox.checked = true;
-  checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
-  checkbox.classList.add('group-labels-option-checkbox')
-
-  const option = document.createElement("label");
-  option.classList.add("group-labels-option"); 
-  option.append(checkbox);
-  option.append(label.name);
-
-  selectGroupLabelsDropdown.append(option);
+    );
+  });
 }
 
+function setupGroupLabelOptionsForm() {
+  // Group label options
+  for (const label of labels) {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = label.name;
+    checkbox.checked = true;
+    checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
+    checkbox.classList.add('group-labels-option-checkbox')
 
-// Group label options dropdown toggles
-selectGroupLabelsButton.addEventListener("click", (e) => {
-  selectGroupLabelsDropdown.style.display =
-    selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
-});
+    const option = document.createElement("label");
+    option.classList.add("group-labels-option"); 
+    option.append(checkbox);
+    option.append(label.name);
 
-document.body.addEventListener('click', (e) => {
-  if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
-    selectGroupLabelsDropdown.style.display = 'none';
+    selectGroupLabelsDropdown.append(option);
   }
-});
 
-// Form filters
-groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
+  // Group label options dropdown toggles
+  selectGroupLabelsButton.addEventListener("click", (e) => {
+    selectGroupLabelsDropdown.style.display =
+      selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
+  });
+
+  document.body.addEventListener('click', (e) => {
+    if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
+      selectGroupLabelsDropdown.style.display = 'none';
+    }
+  });
+
   for (const ckbx of groupLabelOptionCheckboxes) {
-    ckbx.checked = e.target.checked;
-  } 
-  generateReleaseNotes(list.cards);
-});
+    ckbx.addEventListener("change", (e) => {
+      const checked = getGroupLabels();
+      
+      if (checked.length === groupLabelOptionCheckboxes.length) {
+        groupLabelOptionCheckboxAll.checked = true;
+        selectGroupLabelsButton.innerText = "all";
+      } else {
+        groupLabelOptionCheckboxAll.checked = false;
+        selectGroupLabelsButton.innerText = checked.join(', ')
+      }
+      
+      generateReleaseNotes(list.cards);
+    })
+  }
 
-for (const radio of renderOptionRadios) {
-  radio.addEventListener("change", (e) => {
+  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
+    for (const ckbx of groupLabelOptionCheckboxes) {
+      ckbx.checked = e.target.checked;
+    } 
     generateReleaseNotes(list.cards);
   });
 }
 
-includeDescriptionsCheckbox.addEventListener("change", (e) =>
-  generateReleaseNotes(list.cards)
-);
+function setupRenderAsForm() {
+  const renderAs = getRenderAs();
 
-for (const ckbx of groupLabelOptionCheckboxes) {
-  ckbx.addEventListener("change", (e) => {
-    const checked = getGroupLabels();
-    
-    if (checked.length === groupLabelOptionCheckboxes.length) {
-      groupLabelOptionCheckboxAll.checked = true;
-      selectGroupLabelsButton.innerText = "all";
-    } else {
-      groupLabelOptionCheckboxAll.checked = false;
-      selectGroupLabelsButton.innerText = checked.join(', ')
-    }
-    
-    generateReleaseNotes(list.cards);
-  })
+  if (!renderAs) {
+    document.querySelector('input[name="render_as"][value="default"]').checked = true;
+  }
+
+  for (const radio of renderOptionRadios) {
+    radio.addEventListener("change", (e) => {
+      generateReleaseNotes(list.cards);
+    });
+  }
 }
 
+function setupForm() {
+  setupRenderAsForm();
+  setupGroupLabelOptionsForm();
+  setupCopyToClipboardButton()();
 
-t.get('board', 'shared', 'release-notes').then((filters) => {
+  includeDescriptionsCheckbox.addEventListener("change", (e) =>
+    generateReleaseNotes(list.cards)
+  );
+}
 
-  Object.keys(filters).map(o => {
-    const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
+function loadFilter() {
+  t.get('board', 'shared', 'release-notes').then((filters) => {
+    if (filters && Object.keys(filters).length > 0) {
+      Object.keys(filters).map(o => {
+        const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
+    
+        field.checked = true;
+      })
+    }
+  });
+}
 
-    field.checked = true;
-
-    console.log(field);
-  })
-
+(() => {
+  setupForm();
+  loadFilter();
   generateReleaseNotes(list.cards, false);
-});
-
-// t.render(() => {
-//   headerLabel.innerHTML = ` for ${list.name}`;
-
-//   console.log('render');
-  
-  
-// });
+})();
