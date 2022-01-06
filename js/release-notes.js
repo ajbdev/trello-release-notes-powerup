@@ -137,6 +137,104 @@ function persistFilters() {
   t.set('board', 'shared', 'release-notes', filters)
 }
 
+
+// Copy to clipboard functionality
+// ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
+// anyways since execCommand will eventually be deprecated
+copyToClipboardButton.addEventListener('click', (e) => {
+  const type = "text/html";
+  const blob = new Blob([releaseNotesContainer.innerHTML], { type });
+
+  /* global ClipboardItem */
+  const data = [new ClipboardItem({ [type]: blob })];
+  
+  const setCopySuccess = () => {
+    copyToClipboardButton.innerText = '✓ Copied to Clipboard';
+  }
+
+  navigator.clipboard.write(data).then(
+      setCopySuccess,
+      (e) => {
+        // Fallback to execCommand method on failure
+        
+        const copyListener = (e) => {
+          e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
+          setCopySuccess();
+          e.preventDefault();
+        }
+
+        document.addEventListener("copy", copyListener);
+        document.execCommand("copy");
+        document.removeEventListener("copy", copyListener);
+      }
+  );
+});
+
+
+// Group label options
+for (const label of labels) {
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.value = label.name;
+  checkbox.checked = true;
+  checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
+  checkbox.classList.add('group-labels-option-checkbox')
+
+  const option = document.createElement("label");
+  option.classList.add("group-labels-option"); 
+  option.append(checkbox);
+  option.append(label.name);
+
+  selectGroupLabelsDropdown.append(option);
+}
+
+
+// Group label options dropdown toggles
+selectGroupLabelsButton.addEventListener("click", (e) => {
+  selectGroupLabelsDropdown.style.display =
+    selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
+});
+
+document.body.addEventListener('click', (e) => {
+  if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
+    selectGroupLabelsDropdown.style.display = 'none';
+  }
+});
+
+// Form filters
+groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
+  for (const ckbx of groupLabelOptionCheckboxes) {
+    ckbx.checked = e.target.checked;
+  } 
+  generateReleaseNotes(list.cards);
+});
+
+for (const radio of renderOptionRadios) {
+  radio.addEventListener("change", (e) => {
+    generateReleaseNotes(list.cards);
+  });
+}
+
+includeDescriptionsCheckbox.addEventListener("change", (e) =>
+  generateReleaseNotes(list.cards)
+);
+
+for (const ckbx of groupLabelOptionCheckboxes) {
+  ckbx.addEventListener("change", (e) => {
+    const checked = getGroupLabels();
+    
+    if (checked.length === groupLabelOptionCheckboxes.length) {
+      groupLabelOptionCheckboxAll.checked = true;
+      selectGroupLabelsButton.innerText = "all";
+    } else {
+      groupLabelOptionCheckboxAll.checked = false;
+      selectGroupLabelsButton.innerText = checked.join(', ')
+    }
+    
+    generateReleaseNotes(list.cards);
+  })
+}
+
 t.render(() => {
   headerLabel.innerHTML = ` for ${list.name}`;
 
@@ -148,100 +246,4 @@ t.render(() => {
   console.log('render');
   
   
-  // Copy to clipboard functionality
-  // ClipboardItem is unsupported in the Trello iframe, but we'll attempt it
-  // anyways since execCommand will eventually be deprecated
-  copyToClipboardButton.addEventListener('click', (e) => {
-    const type = "text/html";
-    const blob = new Blob([releaseNotesContainer.innerHTML], { type });
-
-    /* global ClipboardItem */
-    const data = [new ClipboardItem({ [type]: blob })];
-    
-    const setCopySuccess = () => {
-      copyToClipboardButton.innerText = '✓ Copied to Clipboard';
-    }
-
-    navigator.clipboard.write(data).then(
-        setCopySuccess,
-        (e) => {
-          // Fallback to execCommand method on failure
-          
-          const copyListener = (e) => {
-            e.clipboardData.setData("text/html", releaseNotesContainer.innerHTML);
-            setCopySuccess();
-            e.preventDefault();
-          }
-
-          document.addEventListener("copy", copyListener);
-          document.execCommand("copy");
-          document.removeEventListener("copy", copyListener);
-        }
-    );
-  });
-
-  
-  // Group label options
-  for (const label of labels) {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = label.name;
-    checkbox.checked = true;
-    checkbox.name = "group_label_options_" + label.name.toLocaleLowerCase().replace(' ','_');
-    checkbox.classList.add('group-labels-option-checkbox')
-
-    const option = document.createElement("label");
-    option.classList.add("group-labels-option"); 
-    option.append(checkbox);
-    option.append(label.name);
-
-    selectGroupLabelsDropdown.append(option);
-  }
-
-
-  // Group label options dropdown toggles
-  selectGroupLabelsButton.addEventListener("click", (e) => {
-    selectGroupLabelsDropdown.style.display =
-      selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
-  });
-  
-  document.body.addEventListener('click', (e) => {
-    if (!e.path.includes(renderOptionsForm) && selectGroupLabelsDropdown.style.display === 'block') {
-      selectGroupLabelsDropdown.style.display = 'none';
-    }
-  });
-
-  // Form filters
-  groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
-    for (const ckbx of groupLabelOptionCheckboxes) {
-      ckbx.checked = e.target.checked;
-    } 
-    generateReleaseNotes(list.cards);
-  });
-
-  for (const radio of renderOptionRadios) {
-    radio.addEventListener("change", (e) => {
-      generateReleaseNotes(list.cards);
-    });
-  }
-
-  includeDescriptionsCheckbox.addEventListener("change", (e) =>
-    generateReleaseNotes(list.cards)
-  );
-  
-  for (const ckbx of groupLabelOptionCheckboxes) {
-    ckbx.addEventListener("change", (e) => {
-      const checked = getGroupLabels();
-      
-      if (checked.length === groupLabelOptionCheckboxes.length) {
-        groupLabelOptionCheckboxAll.checked = true;
-        selectGroupLabelsButton.innerText = "all";
-      } else {
-        groupLabelOptionCheckboxAll.checked = false;
-        selectGroupLabelsButton.innerText = checked.join(', ')
-      }
-      
-      generateReleaseNotes(list.cards);
-    })
-  }
 });
