@@ -249,7 +249,7 @@ function setupForm() {
   setupGroupLabelOptionsForm();
   setupCopyToClipboardButton();
 
-  const inputs = [groupLabelOptionCheckboxes, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox, renderOptionRadios].flat();
+  const inputs = [...groupLabelOptionCheckboxes, ...renderOptionRadios, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox].flat();
 
   console.log("inputs: ", inputs);
 
