@@ -12,6 +12,7 @@ const labels = list.cards
 
 Array.prototype.addEventListener = function(evt, listener) {
   for (const item of this) {
+    console.log(item);
     item.addEventListener(evt, listener);
   }
 }
@@ -214,7 +215,7 @@ function setupGroupLabelOptionsForm() {
     }
   });
 
-  for (const ckbx of groupLabelOptionCheckboxes) {
+  [...groupLabelOptionCheckboxes].addEventListener('change', (e) => {
     ckbx.addEventListener("change", (e) => {
       const checked = getGroupLabels();
       
@@ -226,7 +227,7 @@ function setupGroupLabelOptionsForm() {
         selectGroupLabelsButton.innerText = checked.join(', ')
       }
     })
-  }
+  });
 
   groupLabelOptionCheckboxAll.addEventListener('change', (e) => {
     for (const ckbx of groupLabelOptionCheckboxes) {
@@ -249,6 +250,8 @@ function setupForm() {
   setupCopyToClipboardButton();
 
   const inputs = [groupLabelOptionCheckboxes, groupLabelOptionCheckboxAll, includeDescriptionsCheckbox, renderOptionRadios].flat();
+
+  console.log("inputs: ", inputs);
 
   inputs.addEventListener("change", (e) =>
     generateReleaseNotes(list.cards)
