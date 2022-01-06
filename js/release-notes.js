@@ -241,7 +241,7 @@ t.get('board', 'shared', 'release-notes').then((filters) => {
   Object.keys(filters).map(o => {
     const field = document.querySelector(`input[name="${o}"][value="${filters[o]}"]`);
 
-    
+    field.checked = true;
 
     console.log(field);
   })
