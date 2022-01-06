@@ -12,7 +12,6 @@ const labels = list.cards
 
 Array.prototype.addEventListener = function(evt, listener) {
   for (const item of this) {
-    console.log(item);
     item.addEventListener(evt, listener);
   }
 }
@@ -203,7 +202,6 @@ function setupGroupLabelOptionsForm() {
     selectGroupLabelsDropdown.append(option);
   }
 
-  // Group label options dropdown toggles
   selectGroupLabelsButton.addEventListener("click", (e) => {
     selectGroupLabelsDropdown.style.display =
       selectGroupLabelsDropdown.style.display === "block" ? "none" : "block";
@@ -238,7 +236,7 @@ function updateFormUI() {
     selectGroupLabelsButton.innerText = "all";
   } else {
     groupLabelOptionCheckboxAll.checked = false;
-    selectGroupLabelsButton.innerText = checked.join(', ')
+    selectGroupLabelsButton.innerText = checkedGroupLabels.join(', ')
   }
 }
 
