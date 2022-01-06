@@ -236,8 +236,14 @@ for (const ckbx of groupLabelOptionCheckboxes) {
 }
 
 
-t.get('board', 'shared', 'release-notes').then((v) => {
-  console.log(v);
+t.get('board', 'shared', 'release-notes').then((filters) => {
+
+  Object.keys(filters).map(o => {
+    const field = document.querySelector(`input[name="${o}"]`);
+    
+    console.log(field);
+  })
+
   generateReleaseNotes(list.cards, false);
 });
 
