@@ -115,6 +115,7 @@ function generateReleaseNotes(cards, persist = true) {
     c.sort((a, b) => a.labels[0].name.localeCompare(b.labels[0].name));
   }
 
+  headerLabel.innerHTML = ` for ${list.name}`;
   copyToClipboardButton.innerText = 'Copy to Clipboard';
   releaseNotesContainer.innerHTML = "";
 
