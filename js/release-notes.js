@@ -261,7 +261,7 @@ function setupForm() {
 function loadFilter() {
   return new Promise((resolve, reject) => {
     t.get('board', 'shared', 'release-notes').then((filters) => {
-      console.log(filters);
+      
       if (filters && Object.keys(filters).length > 0) {
         const inputs = getFormInputs();
   
